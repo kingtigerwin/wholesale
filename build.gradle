@@ -1,0 +1,59 @@
+buildscript {
+	ext {
+		flywayVersion = "6.5.7"
+	}
+}
+
+
+plugins {
+	id 'org.springframework.boot' version '2.3.4.RELEASE'
+	id 'io.spring.dependency-management' version '1.0.10.RELEASE'
+	id "org.flywaydb.flyway" version "6.5.7"
+	id 'java'
+}
+
+group = 'com.anz'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+
+	implementation 'io.springfox:springfox-swagger2:2.9.2'
+	implementation 'io.springfox:springfox-swagger-ui:2.9.2'
+
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+
+	implementation 'com.h2database:h2'
+	runtimeOnly 'org.postgresql:postgresql'
+	implementation "org.flywaydb:flyway-core:6.5.7"
+
+	compile "org.mapstruct:mapstruct:1.4.0.Beta1"
+	annotationProcessor "org.mapstruct:mapstruct-processor:1.4.0.Beta1"
+
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
+	compile 'io.jsonwebtoken:jjwt-api:0.11.2'
+	runtime 'io.jsonwebtoken:jjwt-impl:0.11.2'
+	runtime	'io.jsonwebtoken:jjwt-jackson:0.11.2'
+
+	testImplementation('org.springframework.boot:spring-boot-starter-test') {
+		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+	}
+}
+
+test {
+	useJUnitPlatform()
+}
