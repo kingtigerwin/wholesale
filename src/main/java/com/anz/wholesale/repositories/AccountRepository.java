@@ -1,12 +1,12 @@
 package com.anz.wholesale.repositories;
 
+import com.anz.wholesale.entities.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-import java.util.List;
+public interface AccountRepository extends JpaRepository<Account, Long> {
 
-public interface AccountRepository extends JpaRepository<Actor, Long> {
-
-    List<Actor> findByFirstnameOrLastname(String firstname, String lastname);
-
-
+    @Query("select acc from Account acc join fetch acc.transactions  where acc.id=:accountId")
+    Account findAccountAndRelatedTransactionsByAccountId(@Param("accountId") Long accountId);
 }

@@ -2,17 +2,14 @@ package com.anz.wholesale.mappers;
 
 import com.anz.wholesale.dtos.account.AccountGetDto;
 import com.anz.wholesale.dtos.account.AccountPostDto;
-import com.anz.wholesale.dtos.account.AccountPutDto;
+import com.anz.wholesale.entities.Account;
 import org.mapstruct.Mapper;
-import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface AccountMapper {
 
-    Actor toEntity(AccountPostDto actorPostDto);
+    Account toEntity(AccountPostDto actorPostDto);
 
-    AccountGetDto fromEntity(Actor person);
-
-    void copy(AccountPutDto actorPutDto, @MappingTarget Actor actor);
+    AccountGetDto fromEntity(Account account);
 }

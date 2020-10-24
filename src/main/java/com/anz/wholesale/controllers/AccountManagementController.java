@@ -3,6 +3,8 @@ package com.anz.wholesale.controllers;
 import com.anz.wholesale.dtos.account.AccountGetDto;
 import com.anz.wholesale.dtos.account.AccountPostDto;
 import com.anz.wholesale.dtos.account.AccountPutDto;
+import com.anz.wholesale.dtos.transaction.TransactionGetDto;
+import com.anz.wholesale.services.AccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -17,18 +19,20 @@ import java.util.List;
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class AccountManagementController {
 
-    private static final List<AccountGetDto> ACCOUNTS = List.of(
-            new AccountGetDto("12345","SGSavings","Current",LocalDate.now(), "AUD",12.22),
-            new AccountGetDto("23432","AUGSavings","Savings",LocalDate.now(), "SGD",23.44),
-            new AccountGetDto("45634","AUGCurrent","Current",LocalDate.now(), "SGD",11.11)
-    );
-
+    private final AccountService accountService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_ADMINTRAINEE')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_GROUPADMIN')")
     public List<AccountGetDto> getAllAccounts() {
-        return ACCOUNTS;
+        return accountService.getAccounts();
     }
+
+    @GetMapping(path="{accountId}")
+    @PreAuthorize("hasAuthority('account:write')")
+    public List<TransactionGetDto> getTransactions(@PathVariable("accountId") Long accountId) {
+        return accountService.getTransactionsByUser(accountId);
+    }
+
 
     @PostMapping
     @PreAuthorize("hasAuthority('account:write')")

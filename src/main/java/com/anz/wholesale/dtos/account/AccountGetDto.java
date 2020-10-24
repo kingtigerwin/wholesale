@@ -11,6 +11,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class AccountGetDto {
 
+    private Long id;
     private String accountNumber;
     private String accountName;
     private String accountType;
