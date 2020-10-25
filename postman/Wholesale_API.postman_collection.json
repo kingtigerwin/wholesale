@@ -1,0 +1,128 @@
+{
+	"info": {
+		"_postman_id": "a34af5c2-b93e-4869-a56d-118e7d1248b5",
+		"name": "Wholesale_API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "wholesale login",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\":\"sisi\",\n    \"password\":\"password\"\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "fetch account transactions",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJzaXNpIiwiYXV0aG9yaXRpZXMiOlt7ImF1dGhvcml0eSI6ImFjY291bnQ6cmVhZCJ9LHsiYXV0aG9yaXR5IjoiYWNjb3VudDp3cml0ZSJ9LHsiYXV0aG9yaXR5IjoiUk9MRV9BRE1JTiJ9XSwiaWF0IjoxNjAzNjI0MjMzLCJleHAiOjE2MDM2MzA4MDB9.TqCXZbd19NB5qr4padCZ5Jw7LxTDIe_F716FTMcWhasKi_wLtEv1HCEDs8_3YVzG",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n        \"accountNumber\": \"12345\",\n        \"accountName\": \"SGSavings\",\n        \"accountType\": \"Current\",\n        \"balanceDate\": \"2020-10-23\",\n        \"currency\": \"AUD\",\n        \"openingAvailBalance\": 12.22\n    }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/management/accounts/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"management",
+						"accounts",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "fetch accounts list",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJzaXNpIiwiYXV0aG9yaXRpZXMiOlt7ImF1dGhvcml0eSI6ImFjY291bnQ6cmVhZCJ9LHsiYXV0aG9yaXR5IjoiYWNjb3VudDp3cml0ZSJ9LHsiYXV0aG9yaXR5IjoiUk9MRV9BRE1JTiJ9XSwiaWF0IjoxNjAzNjI0MjMzLCJleHAiOjE2MDM2MzA4MDB9.TqCXZbd19NB5qr4padCZ5Jw7LxTDIe_F716FTMcWhasKi_wLtEv1HCEDs8_3YVzG"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n        \"accountNumber\": \"12345\",\n        \"accountName\": \"SGSavings\",\n        \"accountType\": \"Current\",\n        \"balanceDate\": \"2020-10-23\",\n        \"currency\": \"AUD\",\n        \"openingAvailBalance\": 12.22\n    }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/management/accounts/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"management",
+						"accounts",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}

@@ -16,5 +16,4 @@ COPY --from=build ${DEPENDENCY}/META-INF /app/META-INF
 COPY --from=build ${DEPENDENCY}/BOOT-INF/classes /app
 COPY --from=build /workspace/app/scripts/start.sh /app
 RUN chmod +x /app/start.sh
-#ENTRYPOINT ["java","-cp","app:app/lib/*","com.anz.wholesale.WholesaleApplication"]
 ENTRYPOINT ["sh", "-c", "/app/start.sh"]

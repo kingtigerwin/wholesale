@@ -3,8 +3,6 @@ package com.anz.wholesale.controllers;
 import com.anz.wholesale.auth.ApplicationUserService;
 import com.anz.wholesale.dtos.account.AccountGetDto;
 import com.anz.wholesale.dtos.transaction.TransactionGetDto;
-import com.anz.wholesale.entities.Account;
-import com.anz.wholesale.entities.Transaction;
 import com.anz.wholesale.services.AccountService;
 import com.anz.wholesale.utils.Utility;
 import com.fasterxml.jackson.databind.ObjectMapper;
