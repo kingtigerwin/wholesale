@@ -5,15 +5,11 @@ import com.anz.wholesale.entities.User;
 import com.anz.wholesale.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static com.anz.wholesale.security.ApplicationUserRole.*;
 
 @Repository
 @RequiredArgsConstructor
@@ -37,7 +33,7 @@ public class ApplicationUserDaoImpl implements ApplicationUserDao {
         return Optional.of(applicationUserDetails);
     }
 
-    public Set<SimpleGrantedAuthority> getGrantedAuthorities(Set<Authority> authorities) {
+    private Set<SimpleGrantedAuthority> getGrantedAuthorities(Set<Authority> authorities) {
         Set<SimpleGrantedAuthority> permissions = authorities.stream()
                 .map(authority -> new SimpleGrantedAuthority(authority.getPermission()))
                 .collect(Collectors.toSet());

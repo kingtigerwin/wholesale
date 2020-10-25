@@ -5,7 +5,8 @@ insert into accounts (account_number, account_name,account_type,balance_date,cur
 ('347786244','SGCurrent166', 'Current','2018-11-08', 'SGD', 50664.65),
 ('680168913','AUCurrent374', 'Current','2018-11-08', 'AUD', 48574.43),
 ('136056165','AUSavings938', 'Savings','2018-11-08', 'AUD', 34298.76),
-('453963528','SGSavings842', 'Savings','2018-11-08', 'SGD', 33884.32);
+('453963528','SGSavings842', 'Savings','2018-11-08', 'SGD', 33884.32),
+('111111111','SGSavings833', 'Savings','2018-11-08', 'SGD', 37654.32);
 
 insert into transactions (value_date, currency, debit_amount, credit_amount, debit_or_credit, account_id)
 select '2012-01-12', 'SGD', 0, 954.98, 'Credit', id from accounts where accounts.account_number='585309209';

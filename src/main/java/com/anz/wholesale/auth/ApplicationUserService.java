@@ -13,7 +13,7 @@ public class ApplicationUserService implements UserDetailsService {
     private final ApplicationUserDao applicationUserDao;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String username) {
         return applicationUserDao.fetchUserByUsername(username)
                 .orElseThrow(() ->
                         new UsernameNotFoundException(String.format("Username %s not found", username)));

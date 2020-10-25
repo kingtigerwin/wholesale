@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 @Data
 @AllArgsConstructor
 @RequiredArgsConstructor
-public class ErrorResponse {
+public class WholesaleErrorDto {
     private  String message;
     private  String details;
 }

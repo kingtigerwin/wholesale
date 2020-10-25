@@ -32,23 +32,4 @@ public class AccountManagementController {
     public List<TransactionGetDto> getTransactions(@PathVariable("accountId") Long accountId) {
         return accountService.getTransactionsByUser(accountId);
     }
-
-
-    @PostMapping
-    @PreAuthorize("hasAuthority('account:write')")
-    public void addAccount(AccountPostDto accountPostDto) {
-        System.out.println(accountPostDto);
-    }
-
-    @DeleteMapping(path = "{accountId}")
-    @PreAuthorize("hasAuthority('account:write')")
-    public void deleteAccount(@PathVariable("accountId") Long accountId) {
-        System.out.println(accountId);
-    }
-
-    @PutMapping(path = "{accountId}")
-    @PreAuthorize("hasAuthority('account:write')")
-    public void updateAccount(@PathVariable("accountId") Long accountId, @RequestBody AccountPutDto accountPutDto){
-        System.out.println(String.format("%s %s", accountId, accountPutDto));
-    }
 }
