@@ -1,6 +1,6 @@
 package com.anz.wholesale.repositories;
 
-import com.anz.wholesale.Utils;
+import com.anz.wholesale.utils.Utility;
 import com.anz.wholesale.WholesaleApplication;
 import com.anz.wholesale.entities.Account;
 import com.anz.wholesale.entities.Transaction;
@@ -29,13 +29,13 @@ public class AccountRepositoryTest {
     private TransactionRepository transactionRepository;
 
     @Autowired
-    private Utils utils;
+    private Utility utility;
 
     @Test
     public void shouldReturnAccountListGivenAccountsHasBeenInserted() {
         // Create a new account.
-        Account account1 = utils.buildAccount("SGSavings726", "585309209", "Savings", LocalDate.now(), "SGD", 33.44f);
-        Account account2 = utils.buildAccount("SGSavings724", "585309205", "Savings", LocalDate.now(), "SGD", 33.44f);
+        Account account1 = utility.buildAccount("SGSavings726", "585309209", "Savings", LocalDate.now(), "SGD", 33.44f);
+        Account account2 = utility.buildAccount("SGSavings724", "585309205", "Savings", LocalDate.now(), "SGD", 33.44f);
         Account savedAccount = accountRepository.save(account1);
         accountRepository.save(account2);
 
@@ -49,15 +49,15 @@ public class AccountRepositoryTest {
     @Test
     public void shouldReturnAccountRelatedTransactionsGivenAccountId() {
         // Create a new account.
-        Account account = utils.buildAccount("SGSavings726", "585309209", "Savings", LocalDate.now(), "SGD", 33.44f);
+        Account account = utility.buildAccount("SGSavings726", "585309209", "Savings", LocalDate.now(), "SGD", 33.44f);
         Account savedAccount = accountRepository.save(account);
 
         // Create a new transaction associated with account created above.
-        Transaction transaction1 = utils.buildTransaction(savedAccount, 12.3D, "SGD", LocalDate.now());
+        Transaction transaction1 = utility.buildTransaction(savedAccount, 12.3D, "SGD", LocalDate.now());
         transactionRepository.save(transaction1);
 
         // Create one more transaction associated with account created above.
-        Transaction transaction2 = utils.buildTransaction(savedAccount, 12.3D, "SGD", LocalDate.now());
+        Transaction transaction2 = utility.buildTransaction(savedAccount, 12.3D, "SGD", LocalDate.now());
         transactionRepository.save(transaction2);
 
         Set<Transaction> transactions = accountRepository.findAccountAndRelatedTransactionsByAccountId(savedAccount.getId()).get().getTransactions();

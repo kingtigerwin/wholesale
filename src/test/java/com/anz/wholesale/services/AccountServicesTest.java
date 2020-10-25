@@ -1,6 +1,6 @@
 package com.anz.wholesale.services;
 
-import com.anz.wholesale.Utils;
+import com.anz.wholesale.utils.Utility;
 import com.anz.wholesale.dtos.account.AccountGetDto;
 import com.anz.wholesale.dtos.transaction.TransactionGetDto;
 import com.anz.wholesale.entities.Account;
@@ -30,7 +30,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@SpringBootTest(classes = {AccountMapperImpl.class, TransactionMapperImpl.class, Utils.class})
+@SpringBootTest(classes = {AccountMapperImpl.class, TransactionMapperImpl.class, Utility.class})
 public class AccountServicesTest {
 
     @Mock
@@ -43,7 +43,7 @@ public class AccountServicesTest {
     private TransactionMapper transactionMapper;
 
     @Autowired
-    private Utils utils;
+    private Utility utility;
 
     AccountService accountService;
 
@@ -54,13 +54,13 @@ public class AccountServicesTest {
 
     @Test
     public void shouldReturnAccountListGivenAccountsExist() {
-        Account account1 = utils.buildAccount("accName",
+        Account account1 = utility.buildAccount("accName",
                 "accNumber",
                 "Savings",
                 LocalDate.now(),
                 "AUD",
                 33F);
-        Account account2 = utils.buildAccount("accName",
+        Account account2 = utility.buildAccount("accName",
                 "accNumber",
                 "Savings",
                 LocalDate.now(),
@@ -82,7 +82,7 @@ public class AccountServicesTest {
 
     @Test
     public void shouldThrowExceptionGivenTransactionNotExist() {
-        Account account = utils.buildAccount("accName",
+        Account account = utility.buildAccount("accName",
                 "accNumber",
                 "Savings",
                 LocalDate.now(),
@@ -96,14 +96,14 @@ public class AccountServicesTest {
 
     @Test
     public void shouldReturnTransactionsGivenAccountHasTransactions() {
-        Account account = utils.buildAccount("accName",
+        Account account = utility.buildAccount("accName",
                 "accNumber",
                 "Savings",
                 LocalDate.now(),
                 "AUD",
                 33F);
-        Transaction transaction1 = utils.buildTransaction(account, 11d, "AUD", LocalDate.now());
-        Transaction transaction2 = utils.buildTransaction(account, 12d, "AUD", LocalDate.now());
+        Transaction transaction1 = utility.buildTransaction(account, 11d, "AUD", LocalDate.now());
+        Transaction transaction2 = utility.buildTransaction(account, 12d, "AUD", LocalDate.now());
         account.setTransactions(Set.of(transaction1, transaction2));
 
         when(accountRepository.findAccountAndRelatedTransactionsByAccountId(any())).thenReturn(Optional.of(account));

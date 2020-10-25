@@ -53,6 +53,7 @@ dependencies {
 	runtime "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
 	runtime	"io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
 
+	testImplementation "org.springframework.security:spring-security-test"
 	testImplementation "org.mockito:mockito-core:${mockitoVersion}"
 	testImplementation "org.mockito:mockito-junit-jupiter:${mockitoVersion}"
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {
