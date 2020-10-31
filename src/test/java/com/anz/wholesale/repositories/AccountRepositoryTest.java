@@ -48,6 +48,7 @@ public class AccountRepositoryTest {
 
     @Test
     public void shouldReturnAccountRelatedTransactionsGivenAccountId() {
+        // Given
         // Create a new account.
         Account account = utility.buildAccount("SGSavings726", "585309209", "Savings", LocalDate.now(), "SGD", 33.44f);
         Account savedAccount = accountRepository.save(account);
@@ -60,7 +61,10 @@ public class AccountRepositoryTest {
         Transaction transaction2 = utility.buildTransaction(savedAccount, 12.3D, "SGD", LocalDate.now());
         transactionRepository.save(transaction2);
 
+        // When
         Set<Transaction> transactions = accountRepository.findAccountAndRelatedTransactionsByAccountId(savedAccount.getId()).get().getTransactions();
+
+        // Then
         assertNotNull(transactions);
         assertEquals(2, transactions.size());
     }

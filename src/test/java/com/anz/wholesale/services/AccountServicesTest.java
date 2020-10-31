@@ -81,7 +81,7 @@ public class AccountServicesTest {
     }
 
     @Test
-    public void shouldThrowExceptionGivenTransactionNotExist() {
+    public void shouldThrowExceptionGivenAccountIdNotExist() {
         Account account = utility.buildAccount("accName",
                 "accNumber",
                 "Savings",
