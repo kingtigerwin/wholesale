@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile_Dev
+
+    volumes:
+      - "./build/libs/wholesale-0.0.1-SNAPSHOT.jar:/app/app.jar"
+    container_name: app
+    depends_on:
+      - db-postgres
+    ports:
+      - 8080:8080
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db-postgres:5432/postgres
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=mysecretpassword
+      - SPRING_FLYWAY_URL=jdbc:postgresql://db-postgres:5432/postgres
+      - SPRING_FLYWAY_USER=postgres
+      - SPRING_FLYWAY_PASSWORD=mysecretpassword
+
+  db-postgres:
+    image: postgres:13.0-alpine
+    container_name: db-postgres
+    volumes:
+      - type: volume
+        source: db-data
+        target: /var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=mysecretpassword
+
+
+
+volumes:
+  db-data:

@@ -6,6 +6,7 @@ import com.anz.wholesale.dtos.account.AccountPutDto;
 import com.anz.wholesale.dtos.transaction.TransactionGetDto;
 import com.anz.wholesale.services.AccountService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.web.bind.annotation.*;
@@ -23,13 +24,13 @@ public class AccountManagementController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_GROUPADMIN')")
-    public List<AccountGetDto> getAllAccounts() {
-        return accountService.getAccounts();
+    public ResponseEntity<List<AccountGetDto>> getAllAccounts() {
+        return ResponseEntity.ok(accountService.getAccounts());
     }
 
     @GetMapping(path="{accountId}")
     @PreAuthorize("hasAuthority('account:write')")
-    public List<TransactionGetDto> getTransactions(@PathVariable("accountId") Long accountId) {
-        return accountService.getTransactionsByUser(accountId);
+    public ResponseEntity<List<TransactionGetDto>> getTransactions(@PathVariable("accountId") Long accountId) {
+        return ResponseEntity.ok(accountService.getTransactionsByUser(accountId));
     }
 }
