@@ -4,6 +4,7 @@
 * SpringBoot
 * Spring Security + JWT
 * Docker
+* Docker compose
 * PostgreSQL
 * Lombok
 * Mapstruct
@@ -21,7 +22,7 @@
 
 ### This is the springBoot based RESTful API. It supports the below functions:
 
-* Application support H2 in-mem DB and Postgres DB, by default H2 is being used. If you want to use postgres DB, application-postgres.properties shall be used.
+* Application support H2 in-mem DB and Postgres DB, by default postgres DB is being used. If you want to use H2 in-mem DB, application-h2.properties shall be used.
 * List all accounts
 * List all transactions by account id
 
@@ -29,8 +30,9 @@
 ## How to run this application
 
 * Navigate the the root folder /wholesale under the command line
-* run the command to build the whole project: **gradle clean build**
-* run the command to start the application: **java -jar ./build/libs/wholesale-0.0.1-SNAPSHOT.jar**
+* Run the command to build the whole project: **gradle clean build**
+* Either run the command to start the application: **java -jar ./build/libs/wholesale-0.0.1-SNAPSHOT.jar**
+* Or run **docker-compose up**, then application and postgres DB are both up and running.
 
 ## How to access the spring boot restful application
 ### Application by default provide the below 3 users:
@@ -42,16 +44,6 @@
 ### Please find the postman collection file in postman folder and import into your postman to check more details.
 
 
-
-## PostgreSQL version based Wholesale Application
-### I also prepared PostgreSQL version. Please follow below steps if you want to try PostgreSQL version
-* Navigate the the root folder /wholesale under the command line
-* rename **application.properties** to another name e.g. **application_backup.properties**
-* rename **application-postgresql.properties** to **application.properties**
-* setup postgres DB in local
-* run the command to build the whole project: **gradle clean build**
-* when the above step is done, run the command **java -jar ./build/libs/wholesale-0.0.1-SNAPSHOT.jar**
-
 ## Advantages of this application
 * Hibernate builds the entity layer to connect PostgreSQL database server
 * Flyway prepared the initial data.
@@ -62,3 +54,4 @@
 * Lombok makes our life easierIt automatically generates getter,setter, constructor, hashcode, log etc.
 * Dockerfile utilize multi stage and put application files into docker instead of using fat jar.
 * Utilize Spring security to implement authentication and authorization. 
+* Docker compose has been used in local to easily set up the local environment.
