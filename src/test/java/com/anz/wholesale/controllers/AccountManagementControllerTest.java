@@ -80,7 +80,7 @@ public class AccountManagementControllerTest {
                 "Credit",
                 "transactionnarrative");
         BDDMockito.given(accountService.getTransactionsByUser(1L)).willReturn(List.of(transactionGetDto));
-        mockMvc.perform(get("/management/accounts/"+1))
+        mockMvc.perform(get("/management/accounts/"+1+"/transactions"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.[0]").exists())
                 .andExpect(jsonPath("$.[0].id").value(1L))
