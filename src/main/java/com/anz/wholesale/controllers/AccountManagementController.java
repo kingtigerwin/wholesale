@@ -28,7 +28,7 @@ public class AccountManagementController {
         return ResponseEntity.ok(accountService.getAccounts());
     }
 
-    @GetMapping(path="{accountId}")
+    @GetMapping(path="{accountId}/transactions")
     @PreAuthorize("hasAuthority('account:write')")
     public ResponseEntity<List<TransactionGetDto>> getTransactions(@PathVariable("accountId") Long accountId) {
         return ResponseEntity.ok(accountService.getTransactionsByUser(accountId));
