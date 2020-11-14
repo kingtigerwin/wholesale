@@ -6,14 +6,14 @@ phases:
       - echo Logging in to Amazon ECR...
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin 606437128870.dkr.ecr.ap-southeast-2.amazonaws.com
       - IMAGE_REPO_NAME=wholesale
-      - REPOSITORY_URI=606437128870.dkr.ecr.ap-southeast-2.amazonaws.com/${IMAGE_REPO_NAME}
+      - REPOSITORY_URI=606437128870.dkr.ecr.ap-southeast-2.amazonaws.com/$IMAGE_REPO_NAME
       - IMAGE_TAG=$CODEBUILD_SOURCE_VERSION
   build:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
-      - docker build -t $IMAGE_REPO_NAME:$CODEBUILD_SOURCE_VERSION .
-      - docker tag $IMAGE_REPO_NAME:$CODEBUILD_SOURCE_VERSION $REPOSITORY_URI:$CODEBUILD_SOURCE_VERSION
+      - docker build -t $REPOSITORY_URI:latest .
+      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
   post_build:
     commands:
       - echo Build completed on `date`
