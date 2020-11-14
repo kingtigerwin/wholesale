@@ -4,19 +4,20 @@ phases:
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - REPOSITORY_URI=606437128870.dkr.ecr.ap-southeast-2.amazonaws.com/wholesale
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin 606437128870.dkr.ecr.ap-southeast-2.amazonaws.com
+      - IMAGE_REPO_NAME=wholesale
+      - REPOSITORY_URI=606437128870.dkr.ecr.ap-southeast-2.amazonaws.com/${IMAGE_REPO_NAME}
       - IMAGE_TAG=$CODEBUILD_SOURCE_VERSION
   build:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
       - docker build -t $IMAGE_REPO_NAME:$CODEBUILD_SOURCE_VERSION .
-      - docker tag $IMAGE_REPO_NAME:$CODEBUILD_SOURCE_VERSION $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$CODEBUILD_SOURCE_VERSION
+      - docker tag $IMAGE_REPO_NAME:$CODEBUILD_SOURCE_VERSION $REPOSITORY_URI:$CODEBUILD_SOURCE_VERSION
   post_build:
     commands:
       - echo Build completed on `date`
       - echo Pushing the Docker image...
-      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$CODEBUILD_SOURCE_VERSION
+      - docker push $REPOSITORY_URI:$CODEBUILD_SOURCE_VERSION
       - echo Writing image definitions file...
       - printf '[{"name":"accountQuery","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
