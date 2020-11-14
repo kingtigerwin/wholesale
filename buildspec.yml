@@ -12,8 +12,8 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
-      - docker build -t $REPOSITORY_URI:$CODEBUILD_SOURCE_VERSION .
-      - docker tag $REPOSITORY_URI:$CODEBUILD_SOURCE_VERSION $REPOSITORY_URI:$CODEBUILD_SOURCE_VERSION
+      - docker build -t $REPOSITORY_URI:latest .
+      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$CODEBUILD_SOURCE_VERSION
   post_build:
     commands:
       - echo Build completed on `date`
