@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -21,6 +22,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
+@Slf4j
 public class JwtTokenVerifier extends OncePerRequestFilter {
 
     private final SecretKey secretKey;
@@ -28,8 +30,10 @@ public class JwtTokenVerifier extends OncePerRequestFilter {
     @Override
     @SneakyThrows
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
+        log.debug("doFilterInternal() started");
         String authorizationHeader = request.getHeader("Authorization");
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            log.info("No authorizationHeader or header not startWith Bearer");
             filterChain.doFilter(request, response);
             return;
         }
