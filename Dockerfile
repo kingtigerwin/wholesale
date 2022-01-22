@@ -4,7 +4,13 @@ WORKDIR /workspace/app
 
 COPY . /workspace/app
 #RUN --mount=type=cache,target=/root/.gradle ./gradlew clean build
-RUN ./gradlew clean build
+RUN apt-get update && \
+    apt-get install dos2unix && \
+    apt-get clean
+
+RUN chmod +x ./gradlew
+RUN dos2unix ./gradlew 
+RUN ./gradlew clean build 
 
 RUN mkdir -p build/dependency && (cd build/dependency; jar -xf ../libs/*.jar)
 
