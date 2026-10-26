@@ -2,11 +2,12 @@ name: CI/CD
 
 # Replaces the former AWS CodeBuild/CodePipeline setup (buildspec.yml).
 #  - Pull requests to master: build, unit tests, integration tests.
-#  - Pushes to master: the same, then build and push the image to ECR and deploy it to ECS.
+#  - Pushes to master: the same, then build and push the image to ECR and deploy it to the
+#    ECS Express Mode service created by infra/deploy.sh.
 #    The deploy job is skipped until the AWS_ROLE_ARN repository variable is set.
 #
 # Deploy configuration lives in GitHub, not in this file:
-#  - Repository variables: AWS_ROLE_ARN, ECS_CLUSTER, ECS_SERVICE, ECS_TASK_DEFINITION
+#  - Repository variables: AWS_ROLE_ARN, EXPRESS_SERVICE_ARN (both set by infra/deploy.sh)
 #  - Environment "production" (optional protection rules, e.g. required reviewers)
 
 on:
@@ -26,7 +27,6 @@ concurrency:
 env:
   AWS_REGION: ap-southeast-2
   ECR_REPOSITORY: wholesale
-  CONTAINER_NAME: accountQuery
 
 jobs:
   build:
@@ -127,25 +127,42 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Starts from the task definition currently registered in ECS, so only the image changes.
-      - name: Download current task definition
+      # Starts from the service's active container configuration (environment, secrets, logs),
+      # so only the image changes.
+      - name: Deploy new image to the Express service
+        env:
+          SERVICE_ARN: ${{ vars.EXPRESS_SERVICE_ARN }}
+          IMAGE: ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
         run: |
-          aws ecs describe-task-definition \
-            --task-definition "${{ vars.ECS_TASK_DEFINITION }}" \
-            --query taskDefinition > task-definition.json
+          aws ecs describe-express-gateway-service --service-arn "$SERVICE_ARN" --output json > service.json
+          CLUSTER=$(jq -r '.service.cluster' service.json)
+          SERVICE=$(jq -r '.service.serviceName' service.json)
+          latest_deployment() {
+            aws ecs list-service-deployments --cluster "$CLUSTER" --service "$SERVICE" \
+              --query 'serviceDeployments[0].serviceDeploymentArn' --output text
+          }
+          PREVIOUS=$(latest_deployment)
 
-      - name: Point task definition at the new image
-        id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: task-definition.json
-          container-name: ${{ env.CONTAINER_NAME }}
-          image: ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+          jq --arg image "$IMAGE" '.service.activeConfigurations[0].primaryContainer | .image = $image' \
+            service.json > primary-container.json
+          aws ecs update-express-gateway-service --service-arn "$SERVICE_ARN" \
+            --primary-container file://primary-container.json --query 'service.serviceArn' --output text
 
-      - name: Deploy to ECS service
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
-        with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
-          cluster: ${{ vars.ECS_CLUSTER }}
-          service: ${{ vars.ECS_SERVICE }}
-          wait-for-service-stability: true
+          # Express rolls out as a canary with bake times (~10+ minutes), longer than the
+          # services-stable waiter allows, so follow the service deployment itself.
+          for _ in $(seq 1 60); do
+            DEPLOYMENT=$(latest_deployment)
+            if [ "$DEPLOYMENT" != "$PREVIOUS" ]; then
+              STATUS=$(aws ecs describe-service-deployments --service-deployment-arns "$DEPLOYMENT" \
+                --query 'serviceDeployments[0].[status,lifecycleStage]' --output text)
+              echo "$(date +%T) $STATUS"
+              case "$STATUS" in
+                SUCCESSFUL*) exit 0 ;;
+                PENDING*|IN_PROGRESS*) ;;
+                *) echo "::error::Deployment $DEPLOYMENT ended with $STATUS"; exit 1 ;;
+              esac
+            fi
+            sleep 30
+          done
+          echo "::error::Deployment did not finish within 30 minutes"
+          exit 1

@@ -1,0 +1,300 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Wholesale API on ECS Express Mode (Fargate) with RDS PostgreSQL, served at a custom domain.
+  Deployed in phases by infra/deploy.sh; removed with infra/destroy.sh.
+
+Parameters:
+  ImageUri:
+    Type: String
+    Default: ''
+    Description: Image for the first deployment. Leave empty to create only the base resources (phase 1).
+  AlbDnsName:
+    Type: String
+    Default: ''
+    Description: DNS name of the Express-managed load balancer. Set in phase 3 to create the DNS record.
+  AlbHostedZoneId:
+    Type: String
+    Default: ''
+    Description: Canonical hosted zone id of the Express-managed load balancer.
+  DomainName:
+    Type: String
+    Default: api.haoran.cloud
+  HostedZoneId:
+    Type: AWS::Route53::HostedZone::Id
+    Default: Z5UXKBB5IU578
+  GitHubRepository:
+    Type: String
+    Default: kingtigerwin/wholesale
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: Default VPC; Express Mode places the service in it when no network configuration is given.
+  VpcCidr:
+    Type: String
+    Default: 172.31.0.0/16
+
+Conditions:
+  HasImage: !Not [!Equals [!Ref ImageUri, '']]
+  HasAlb: !And
+    - !Condition HasImage
+    - !Not [!Equals [!Ref AlbDnsName, '']]
+
+Resources:
+
+  # ---------- Container registry ----------
+
+  Repository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: wholesale
+      EmptyOnDelete: true          # so deleting the stack also removes pushed images
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {"rules":[{"rulePriority":1,"description":"Keep the last 10 images",
+            "selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":10},
+            "action":{"type":"expire"}}]}
+
+  # ---------- Database ----------
+
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: wholesale PostgreSQL - reachable only from inside the VPC
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: !Ref VpcCidr
+
+  Database:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Delete         # test environment: no final snapshot left behind (and billed) after deletion
+    UpdateReplacePolicy: Delete
+    Properties:
+      DBInstanceIdentifier: wholesale
+      Engine: postgres
+      EngineVersion: '17.5'
+      DBInstanceClass: db.t4g.micro
+      AllocatedStorage: '20'
+      StorageType: gp3
+      StorageEncrypted: true
+      DBName: wholesale
+      MasterUsername: wholesale
+      ManageMasterUserPassword: true   # RDS creates and stores the password in Secrets Manager
+      PubliclyAccessible: false
+      VPCSecurityGroups:
+        - !GetAtt DatabaseSecurityGroup.GroupId
+      BackupRetentionPeriod: 0
+      DeletionProtection: false
+
+  # ---------- Secrets ----------
+
+  JwtSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: wholesale/jwt-secret-key
+      Description: HMAC key used to sign wholesale JWTs (replaces the development key in application.properties)
+      GenerateSecretString:
+        PasswordLength: 64
+        ExcludePunctuation: true
+
+  # ---------- Logs ----------
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/wholesale
+      RetentionInDays: 7
+
+  # ---------- IAM ----------
+
+  TaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: wholesale-task-execution
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ecs-tasks.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Policies:
+        - PolicyName: read-app-secrets
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource:
+                  - !GetAtt Database.MasterUserSecret.SecretArn
+                  - !Ref JwtSecret
+
+  InfrastructureRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: wholesale-express-infrastructure
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ecs.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSInfrastructureRoleforExpressGatewayServices
+
+  # GitHub Actions signs in with OIDC, so no AWS access keys are stored in GitHub.
+  GitHubOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+
+  GitHubDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: wholesale-github-deploy
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Federated: !Ref GitHubOidcProvider }
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                # Only the deploy job, which runs in the "production" environment, can assume this role.
+                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubRepository}:environment:production
+      Policies:
+        - PolicyName: push-image-and-deploy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: ecr:GetAuthorizationToken
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:BatchGetImage
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:InitiateLayerUpload
+                  - ecr:UploadLayerPart
+                  - ecr:CompleteLayerUpload
+                  - ecr:PutImage
+                Resource: !GetAtt Repository.Arn
+              - Effect: Allow
+                Action:
+                  - ecs:DescribeExpressGatewayService
+                  - ecs:UpdateExpressGatewayService
+                  - ecs:DescribeServices
+                  - ecs:ListServiceDeployments
+                  - ecs:DescribeServiceDeployments
+                  - ecs:DescribeTaskDefinition
+                  - ecs:RegisterTaskDefinition
+                  - ecs:UpdateService
+                Resource: '*'
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource:
+                  - !GetAtt TaskExecutionRole.Arn
+                  - !GetAtt InfrastructureRole.Arn
+                Condition:
+                  StringEquals:
+                    iam:PassedToService: ecs.amazonaws.com
+
+  # ---------- Custom domain certificate ----------
+
+  Certificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref DomainName
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !Ref DomainName
+          HostedZoneId: !Ref HostedZoneId   # CloudFormation adds the validation record to the zone
+
+  # ---------- Service (phase 2 onwards) ----------
+
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: wholesale
+
+  Service:
+    Type: AWS::ECS::ExpressGatewayService
+    Condition: HasImage
+    Properties:
+      ServiceName: wholesale
+      Cluster: !Ref Cluster
+      InfrastructureRoleArn: !GetAtt InfrastructureRole.Arn
+      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+      Cpu: '512'
+      Memory: '1024'
+      HealthCheckPath: /actuator/health
+      ScalingTarget:
+        MinTaskCount: 1
+        MaxTaskCount: 2
+      PrimaryContainer:
+        Image: !Ref ImageUri
+        ContainerPort: 8080
+        AwsLogsConfiguration:
+          LogGroup: !Ref LogGroup
+          LogStreamPrefix: ecs
+        Environment:
+          - Name: SPRING_DATASOURCE_URL
+            Value: !Sub jdbc:postgresql://${Database.Endpoint.Address}:${Database.Endpoint.Port}/wholesale
+          - Name: LOGGING_LEVEL_COM_ANZ_WHOLESALE
+            Value: info
+        Secrets:
+          - Name: SPRING_DATASOURCE_USERNAME
+            ValueFrom: !Sub "${Database.MasterUserSecret.SecretArn}:username::"
+          - Name: SPRING_DATASOURCE_PASSWORD
+            ValueFrom: !Sub "${Database.MasterUserSecret.SecretArn}:password::"
+          - Name: JWT_SECRETKEY
+            ValueFrom: !Ref JwtSecret
+
+  # Serve api.haoran.cloud's certificate on the Express-managed HTTPS listener (alongside its generated one).
+  ListenerCertificate:
+    Type: AWS::ElasticLoadBalancingV2::ListenerCertificate
+    Condition: HasImage
+    Properties:
+      ListenerArn: !GetAtt Service.ECSManagedResourceArns.IngressPath.ListenerArn
+      Certificates:
+        - CertificateArn: !Ref Certificate
+
+  # ---------- DNS (phase 3) ----------
+
+  DnsRecord:
+    Type: AWS::Route53::RecordSet
+    Condition: HasAlb
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref DomainName
+      Type: A
+      AliasTarget:
+        DNSName: !Ref AlbDnsName
+        HostedZoneId: !Ref AlbHostedZoneId
+        EvaluateTargetHealth: false
+
+Outputs:
+  RepositoryUri:
+    Value: !GetAtt Repository.RepositoryUri
+  GitHubDeployRoleArn:
+    Value: !GetAtt GitHubDeployRole.Arn
+  ServiceArn:
+    Condition: HasImage
+    Value: !GetAtt Service.ServiceArn
+  ServiceEndpoint:
+    Condition: HasImage
+    Value: !GetAtt Service.Endpoint
+  LoadBalancerArn:
+    Condition: HasImage
+    Value: !GetAtt Service.ECSManagedResourceArns.IngressPath.LoadBalancerArn
+  ListenerRuleArn:
+    Condition: HasImage
+    Value: !GetAtt Service.ECSManagedResourceArns.IngressPath.ListenerRuleArn

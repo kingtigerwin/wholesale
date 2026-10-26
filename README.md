@@ -52,15 +52,17 @@
 The pipeline is defined in **.github/workflows/ci-cd.yml**:
 
 * Pull requests to master: build, unit tests and integration tests.
-* Pushes to master: the same checks, then the Docker image is pushed to ECR (tagged with the commit SHA and `latest`) and deployed to the ECS service. The deploy job is skipped until the **AWS_ROLE_ARN** variable below is set.
+* Pushes to master: the same checks, then the Docker image is pushed to ECR (tagged with the commit SHA and `latest`) and deployed to the ECS Express Mode service. The deploy job is skipped until the **AWS_ROLE_ARN** variable is set.
 * The image packages the jar from the build job, so the deployed jar is the one the tests ran against. The **Dockerfile** does not compile anything; to build the image locally run **./gradlew bootJar** first, then **docker build -t wholesale .**
+* The deploy job reads two repository variables, both set by **infra/deploy.sh**: **AWS_ROLE_ARN** (the IAM role GitHub Actions assumes through OIDC, so no AWS keys are stored in GitHub) and **EXPRESS_SERVICE_ARN**.
 
-One-time setup in GitHub (Settings → Secrets and variables → Actions → Variables):
+## AWS infrastructure (infra/)
 
-* **AWS_ROLE_ARN**: IAM role GitHub Actions assumes through OIDC. It needs ECR push and ECS deploy permissions (including `iam:PassRole` for the task's roles).
-* **ECS_CLUSTER**, **ECS_SERVICE**: where the app runs.
-* **ECS_TASK_DEFINITION**: task definition family. The workflow takes its latest revision and only swaps the image of the `accountQuery` container.
-* Optionally add protection rules (e.g. required reviewers) to the **production** environment to gate deploys.
+**infra/wholesale.yaml** is a CloudFormation stack in ap-southeast-2: ECS Express Mode service on Fargate, RDS PostgreSQL, Secrets Manager (DB password and JWT key), ECR, the GitHub deploy role, and the **api.haoran.cloud** certificate and DNS record.
+
+* **infra/deploy.sh** creates or updates it (needs AWS credentials, Docker and gh). The first run takes about 20 minutes.
+* **infra/destroy.sh** deletes the stack, removes the GitHub variables, and lists anything left behind.
+* It costs roughly USD 65–75/month while it exists (Fargate, load balancer, RDS), so destroy it when you are done testing.
 
 ## How to access the spring boot restful application
 ### Application by default provide the below 3 users:
