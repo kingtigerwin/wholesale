@@ -1,7 +1,9 @@
 
 # ANZ Wholesale RESTful Backend Sample application
 ## Tech Stack:
-* SpringBoot
+* Java 25
+* SpringBoot 4.1
+* Gradle 9 (wrapper)
 * Spring Security + JWT
 * Docker
 * Docker compose
@@ -13,6 +15,8 @@
 * Mockito
 * MockMvc
 * Flyway
+* Testcontainers + REST Assured (integration tests)
+* GitHub Actions (CI/CD)
 
 ## Topics
 1. [How to run this application](#How-to-run-this-application)
@@ -30,9 +34,33 @@
 ## How to run this application
 
 * Navigate the the root folder /wholesale under the command line
-* Run the command to build the whole project: **gradle clean build**
+* Run the command to build the whole project: **./gradlew clean build** (Gradle downloads a Java 25 toolchain automatically if one is not installed)
 * Either run the command to start the application: **java -jar ./build/libs/wholesale-0.0.1-SNAPSHOT.jar**
-* Or run **docker-compose up**, then application and postgres DB are both up and running.
+* Or run **docker compose up**, then application and postgres DB are both up and running.
+
+## How to run the integration tests
+
+* Docker must be running. Run **./gradlew integrationTest**
+* It builds the jar, starts the app and a fresh Postgres from **docker-compose.it.yaml** (via Testcontainers), then calls the real endpoints with REST Assured. The stack is removed when the tests finish.
+* **./gradlew test** still runs only the fast unit tests and does not need Docker.
+* Unit tests always run on in-memory H2 and integration tests always run on PostgreSQL. A test in each suite fails if that ever changes.
+* With Colima instead of Docker Desktop, point Testcontainers at the Colima socket first:
+  **export DOCKER_HOST=unix://$HOME/.colima/default/docker.sock TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock**
+
+## CI/CD (GitHub Actions)
+
+The pipeline is defined in **.github/workflows/ci-cd.yml**:
+
+* Pull requests to master: build, unit tests and integration tests.
+* Pushes to master: the same checks, then the Docker image is pushed to ECR (tagged with the commit SHA and `latest`) and deployed to the ECS service.
+* The image packages the jar from the build job, so the deployed jar is the one the tests ran against. The **Dockerfile** does not compile anything; to build the image locally run **./gradlew bootJar** first, then **docker build -t wholesale .**
+
+One-time setup in GitHub (Settings → Secrets and variables → Actions → Variables):
+
+* **AWS_ROLE_ARN**: IAM role GitHub Actions assumes through OIDC. It needs ECR push and ECS deploy permissions (including `iam:PassRole` for the task's roles).
+* **ECS_CLUSTER**, **ECS_SERVICE**: where the app runs.
+* **ECS_TASK_DEFINITION**: task definition family. The workflow takes its latest revision and only swaps the image of the `accountQuery` container.
+* Optionally add protection rules (e.g. required reviewers) to the **production** environment to gate deploys.
 
 ## How to access the spring boot restful application
 ### Application by default provide the below 3 users:

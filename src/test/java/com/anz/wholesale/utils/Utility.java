@@ -4,10 +4,9 @@ import com.anz.wholesale.dtos.account.AccountGetDto;
 import com.anz.wholesale.dtos.transaction.TransactionGetDto;
 import com.anz.wholesale.entities.Account;
 import com.anz.wholesale.entities.Transaction;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Configuration
@@ -31,7 +30,7 @@ public class Utility {
                                  String accountType,
                                  LocalDate balanceDate,
                                  String currency,
-                                 Float openingAvailBalance) {
+                                 BigDecimal openingAvailBalance) {
 
         Account account = new Account();
         account.setAccountName(accountName);
@@ -74,10 +73,5 @@ public class Utility {
         transactionGetDto.setDebitOrCredit(debitOrCredit);
         transactionGetDto.setTransactionNarrative(transactionNarrative);
         return transactionGetDto;
-    }
-
-    @Bean
-    public ObjectMapper getObjectMapper() {
-        return new ObjectMapper();
     }
 }

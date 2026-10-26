@@ -2,7 +2,8 @@ package com.anz.wholesale.entities;
 
 import lombok.*;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Set;
 
@@ -32,7 +33,7 @@ public class Account {
     private String currency;
 
     @Column(name = "opening_avail_balance", unique = true, nullable = false)
-    private Float openingAvailBalance;
+    private BigDecimal openingAvailBalance;
 
     @OneToMany(mappedBy = "account")
     private Set<Transaction> transactions;

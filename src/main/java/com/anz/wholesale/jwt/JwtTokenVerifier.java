@@ -1,7 +1,9 @@
 package com.anz.wholesale.jwt;
 
+import com.anz.wholesale.exceptions.WholesaleErrorDto;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -10,12 +12,14 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.http.MediaType;
 import org.springframework.web.filter.OncePerRequestFilter;
+import tools.jackson.databind.json.JsonMapper;
 
 import javax.crypto.SecretKey;
-import javax.servlet.FilterChain;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,11 +44,21 @@ public class JwtTokenVerifier extends OncePerRequestFilter {
 
         String token = authorizationHeader.replace("Bearer ", "");
 
-        Jws<Claims> claimsJws = Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token);
-        Claims body = claimsJws.getBody();
+        Jws<Claims> claimsJws;
+        try {
+            claimsJws = Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token);
+        } catch (JwtException | IllegalArgumentException e) {
+            log.info("Token is invalid or expired", e);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            new JsonMapper().writeValue(response.getOutputStream(),
+                    new WholesaleErrorDto("INVALID_TOKEN", "Token is invalid or expired"));
+            return;
+        }
+        Claims body = claimsJws.getPayload();
         String username = body.getSubject();
 
         var authorities = (List<Map<String, String>>) body.get("authorities");

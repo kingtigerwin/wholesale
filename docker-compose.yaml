@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
 
   app:
@@ -18,12 +16,9 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db-postgres:5432/postgres
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=mysecretpassword
-      - SPRING_FLYWAY_URL=jdbc:postgresql://db-postgres:5432/postgres
-      - SPRING_FLYWAY_USER=postgres
-      - SPRING_FLYWAY_PASSWORD=mysecretpassword
 
   db-postgres:
-    image: postgres:13.0-alpine
+    image: postgres:17-alpine
     container_name: db-postgres
     volumes:
       - type: volume

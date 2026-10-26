@@ -19,9 +19,13 @@ public class ApplicationUserDaoImpl implements ApplicationUserDao {
 
     @Override
     public Optional<ApplicationUserDetails> fetchUserByUsername(String username) {
-        User user = userRepository.findByUsername(username);
+        // An unknown username yields Optional.empty(), which ApplicationUserService turns into UsernameNotFoundException.
+        return userRepository.findByUsername(username)
+                .map(this::toApplicationUserDetails);
+    }
 
-        ApplicationUserDetails applicationUserDetails = new ApplicationUserDetails(
+    private ApplicationUserDetails toApplicationUserDetails(User user) {
+        return new ApplicationUserDetails(
                 user.getUsername(),
                 user.getEncodedPassword(),
                 getGrantedAuthorities(user.getAuthorities()),
@@ -30,7 +34,6 @@ public class ApplicationUserDaoImpl implements ApplicationUserDao {
                 true,
                 true
         );
-        return Optional.of(applicationUserDetails);
     }
 
     private Set<SimpleGrantedAuthority> getGrantedAuthorities(Set<Authority> authorities) {

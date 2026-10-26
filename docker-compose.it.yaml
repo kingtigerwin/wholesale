@@ -1,0 +1,31 @@
+# Stack used by ./gradlew integrationTest (started via Testcontainers).
+# Differs from docker-compose.yaml so test runs are isolated and repeatable:
+#  - no container_name (unsupported by Testcontainers, and clashes with a running dev stack)
+#  - no fixed host ports (Testcontainers maps them)
+#  - no persistent volume, so every run starts from a freshly Flyway-seeded database
+#  - app waits for Postgres to be healthy before starting
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile_Dev
+    depends_on:
+      db-postgres:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db-postgres:5432/postgres
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=mysecretpassword
+
+  db-postgres:
+    image: postgres:17-alpine
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=mysecretpassword
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 2s
+      timeout: 5s
+      retries: 30

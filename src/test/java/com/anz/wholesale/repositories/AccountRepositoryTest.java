@@ -11,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
@@ -34,8 +35,8 @@ public class AccountRepositoryTest {
     @Test
     public void shouldReturnAccountListGivenAccountsHasBeenInserted() {
         // Create a new account.
-        Account account1 = utility.buildAccount("SGSavings726", "585309209", "Savings", LocalDate.now(), "SGD", 33.44f);
-        Account account2 = utility.buildAccount("SGSavings724", "585309205", "Savings", LocalDate.now(), "SGD", 33.44f);
+        Account account1 = utility.buildAccount("SGSavings726", "585309209", "Savings", LocalDate.now(), "SGD", new BigDecimal("33.44"));
+        Account account2 = utility.buildAccount("SGSavings724", "585309205", "Savings", LocalDate.now(), "SGD", new BigDecimal("33.44"));
         Account savedAccount = accountRepository.save(account1);
         accountRepository.save(account2);
 
@@ -50,7 +51,7 @@ public class AccountRepositoryTest {
     public void shouldReturnAccountRelatedTransactionsGivenAccountId() {
         // Given
         // Create a new account.
-        Account account = utility.buildAccount("SGSavings726", "585309209", "Savings", LocalDate.now(), "SGD", 33.44f);
+        Account account = utility.buildAccount("SGSavings726", "585309209", "Savings", LocalDate.now(), "SGD", new BigDecimal("33.44"));
         Account savedAccount = accountRepository.save(account);
 
         // Create a new transaction associated with account created above.

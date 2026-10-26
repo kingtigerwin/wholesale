@@ -1,27 +1,23 @@
-buildscript {
-	ext {
-		flywayVersion = "6.5.7"
-	}
-}
-
-
 plugins {
-	id 'org.springframework.boot' version '2.3.4.RELEASE'
-	id 'io.spring.dependency-management' version '1.0.10.RELEASE'
-	id "org.flywaydb.flyway" version "6.5.7"
+	id 'org.springframework.boot' version '4.1.2'
+	id 'io.spring.dependency-management' version '1.1.7'
 	id 'java'
 }
 
 ext {
-	flywayVersion = '6.5.7'
-	mapstructVersion = '1.4.0.Beta1'
-	jjwtVersion = '0.11.2'
-	mockitoVersion = '3.5.15'
+	mapstructVersion = '1.6.3'
+	jjwtVersion = '0.13.0'
+	restAssuredVersion = '6.0.0'
 }
 
 group = 'com.anz'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '11'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(25)
+	}
+}
 
 configurations {
 	compileOnly {
@@ -35,33 +31,59 @@ repositories {
 
 dependencies {
 
-	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-flyway'
 
-	implementation 'com.h2database:h2'
+	runtimeOnly 'com.h2database:h2'
 	runtimeOnly 'org.postgresql:postgresql'
-	implementation "org.flywaydb:flyway-core:${flywayVersion}"
+	runtimeOnly 'org.flywaydb:flyway-database-postgresql'
 
-	compile "org.mapstruct:mapstruct:${mapstructVersion}"
+	implementation "org.mapstruct:mapstruct:${mapstructVersion}"
 	annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
 
-	compile "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
-	runtime "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
-	runtime	"io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
+	implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
 
-	testImplementation "org.springframework.security:spring-security-test"
-	testImplementation "org.mockito:mockito-core:${mockitoVersion}"
-	testImplementation "org.mockito:mockito-junit-jupiter:${mockitoVersion}"
-	testImplementation('org.springframework.boot:spring-boot-starter-test') {
-		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
-	}
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 test {
 	useJUnitPlatform()
+}
+
+// Black-box tests against the app and Postgres started from docker-compose.it.yaml.
+// Run with: ./gradlew integrationTest (requires Docker)
+testing {
+	suites {
+		integrationTest(JvmTestSuite) {
+			useJUnitJupiter()
+			dependencies {
+				implementation 'org.testcontainers:testcontainers'
+				implementation 'org.testcontainers:testcontainers-junit-jupiter'
+				implementation "io.rest-assured:rest-assured:${restAssuredVersion}"
+				runtimeOnly 'org.postgresql:postgresql'
+				implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
+				runtimeOnly "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
+				runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
+			}
+			targets.configureEach {
+				testTask.configure {
+					// Dockerfile_Dev copies build/libs/wholesale-<version>.jar into the app image
+					dependsOn tasks.named('bootJar')
+					shouldRunAfter tasks.named('test')
+				}
+			}
+		}
+	}
 }
