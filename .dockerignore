@@ -1,0 +1,4 @@
+# Both Dockerfiles only need the built jar (and the dev start script), so keep the build context small.
+*
+!build/libs/*.jar
+!scripts/start_dev.sh

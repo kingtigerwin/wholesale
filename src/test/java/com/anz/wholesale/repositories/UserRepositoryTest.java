@@ -15,6 +15,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = WholesaleApplication.class)
@@ -54,8 +55,13 @@ public class UserRepositoryTest {
         userRepository.save(savedUser);
 
 
-        User savedUserWithAuthorities = userRepository.findByUsername(savedUser.getUsername());
+        User savedUserWithAuthorities = userRepository.findByUsername(savedUser.getUsername()).orElseThrow();
         assertNotNull(savedUserWithAuthorities);
         assertEquals(2, savedUserWithAuthorities.getAuthorities().size());
+    }
+
+    @Test
+    public void shouldReturnEmptyGivenUnknownUsername() {
+        assertTrue(userRepository.findByUsername("nobody").isEmpty());
     }
 }

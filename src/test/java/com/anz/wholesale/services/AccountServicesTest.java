@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -59,13 +60,13 @@ public class AccountServicesTest {
                 "Savings",
                 LocalDate.now(),
                 "AUD",
-                33F);
+                new BigDecimal("33"));
         Account account2 = utility.buildAccount("accName",
                 "accNumber",
                 "Savings",
                 LocalDate.now(),
                 "AUD",
-                33F);
+                new BigDecimal("33"));
 
         when(accountRepository.findAll()).thenReturn(List.of(account1, account2));
         List<AccountGetDto> returnedAccountList = accountService.getAccounts();
@@ -87,7 +88,7 @@ public class AccountServicesTest {
                 "Savings",
                 LocalDate.now(),
                 "AUD",
-                33F);
+                new BigDecimal("33"));
 
         when(accountRepository.findAccountAndRelatedTransactionsByAccountId(any())).thenReturn(Optional.of(account));
         assertThrows(TransactionNotExistException.class, () -> accountService.getTransactionsByUser(111L)
@@ -101,7 +102,7 @@ public class AccountServicesTest {
                 "Savings",
                 LocalDate.now(),
                 "AUD",
-                33F);
+                new BigDecimal("33"));
         Transaction transaction1 = utility.buildTransaction(account, 11d, "AUD", LocalDate.now());
         Transaction transaction2 = utility.buildTransaction(account, 12d, "AUD", LocalDate.now());
         account.setTransactions(Set.of(transaction1, transaction2));
