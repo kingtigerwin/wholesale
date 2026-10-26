@@ -3,6 +3,7 @@ name: CI/CD
 # Replaces the former AWS CodeBuild/CodePipeline setup (buildspec.yml).
 #  - Pull requests to master: build, unit tests, integration tests.
 #  - Pushes to master: the same, then build and push the image to ECR and deploy it to ECS.
+#    The deploy job is skipped until the AWS_ROLE_ARN repository variable is set.
 #
 # Deploy configuration lives in GitHub, not in this file:
 #  - Repository variables: AWS_ROLE_ARN, ECS_CLUSTER, ECS_SERVICE, ECS_TASK_DEFINITION
@@ -88,7 +89,7 @@ jobs:
   deploy:
     name: Deploy to ECS
     needs: [build, integration-test]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master' && vars.AWS_ROLE_ARN != ''
     runs-on: ubuntu-latest
     environment: production
     permissions:

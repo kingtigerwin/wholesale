@@ -52,7 +52,7 @@
 The pipeline is defined in **.github/workflows/ci-cd.yml**:
 
 * Pull requests to master: build, unit tests and integration tests.
-* Pushes to master: the same checks, then the Docker image is pushed to ECR (tagged with the commit SHA and `latest`) and deployed to the ECS service.
+* Pushes to master: the same checks, then the Docker image is pushed to ECR (tagged with the commit SHA and `latest`) and deployed to the ECS service. The deploy job is skipped until the **AWS_ROLE_ARN** variable below is set.
 * The image packages the jar from the build job, so the deployed jar is the one the tests ran against. The **Dockerfile** does not compile anything; to build the image locally run **./gradlew bootJar** first, then **docker build -t wholesale .**
 
 One-time setup in GitHub (Settings → Secrets and variables → Actions → Variables):
